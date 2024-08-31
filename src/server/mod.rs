@@ -1,11 +1,13 @@
 mod create;
 mod start;
 
-use std::{marker::PhantomData, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
+use std::{marker::PhantomData, path::PathBuf, time::Duration};
 
 use async_std::channel::{Receiver, RecvError, SendError, Sender};
 use thiserror::Error;
 use tokio::{io, task::JoinError};
+
+use crate::connection::Mail;
 
 #[derive(Error, Debug)]
 pub enum ServerError {
@@ -39,7 +41,7 @@ pub struct Config {
     pub buffer_size: Option<usize>,
     pub certs_path: Option<PathBuf>,
     pub key_path: Option<PathBuf>,
-    pub mail_tx: Sender<()>,
+    pub mail_tx: Sender<Mail>,
     pub affirm_tx: Sender<()>,
     pub shutdown_rx: Receiver<()>,
 }
@@ -48,8 +50,8 @@ pub struct Listening;
 pub struct Closed;
 
 pub struct SmtpServer<State = Closed> {
-    pub config: Config,
-    mail_rx: Receiver<()>,
+    config: Config,
+    pub mail_rx: Receiver<Mail>,
     affirm_rx: Receiver<()>,
     shutdown_tx: Sender<()>,
     state: PhantomData<State>,

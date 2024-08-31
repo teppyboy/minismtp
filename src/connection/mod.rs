@@ -1,43 +1,50 @@
-mod process;
 mod create;
+mod process;
 mod rw;
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, time::Duration};
 
+use thiserror::Error;
 use tokio::net::TcpStream;
 use tokio_rustls::server::TlsStream;
-use thiserror::Error;
-use tokio::io;
+
+use crate::security::spf::SpfPolicy;
 
 #[derive(Error, Debug)]
 pub enum ProcessingError {
     #[error("IO error: {0}")]
     IO(#[from] std::io::Error),
-    #[error("Could not respond to client")]
-    Response,
-    #[error("Could not read from client")]
-    Read,
+    #[error("Could not read mail")]
+    NoMail,
+    #[error("Connection closed")]
+    ConnectionClosed,
+    #[error("Could not send response")]
+    SendResponse,
+    #[error("No certificate provided")]
+    NoCertificate,
+    #[error("Already encrypted")]
+    AlreadyEncrypted,
+    #[error("Socket read")]
+    SocketRead,
 }
 
-
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum State {
     Initial,
-    Ehlo,
+    Ehlo(String),
     StartTls,
     MailFrom(Mail),
-    RcptTo(Mail),
-    Invalid
-
+    Data(Mail),
+    Invalid,
 }
-
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Mail {
+    pub domain: String,
     pub from: String,
     pub to: Vec<String>,
     pub data: String,
+    pub spf: (bool, SpfPolicy),
 }
-
 
 #[derive(Debug)]
 pub enum Stream {
@@ -48,12 +55,11 @@ pub enum Stream {
 #[derive(Debug)]
 pub enum TlsConfig {
     Plain,
-    Encrypted{
-        cert_path:PathBuf,
-        key_path:PathBuf,
+    Encrypted {
+        cert_path: PathBuf,
+        key_path: PathBuf,
     },
 }
-
 
 #[derive(Debug)]
 pub struct Connection {
@@ -61,6 +67,6 @@ pub struct Connection {
     pub stream: Stream,
     pub state: State,
     pub tls_config: TlsConfig,
-    pub domain:&'static str,
+    pub domain: &'static str,
+    pub timeout: Duration,
 }
-

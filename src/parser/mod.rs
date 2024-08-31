@@ -1,11 +1,19 @@
-mod responses;
+mod data;
+mod ehlo;
+mod mail;
+mod rcpt;
+pub mod responses;
+mod starttls;
 
-use responses::{EHLO_TLS_AVAILABLE, EHLO_TLS_UNAVAILABLE, OK, READY_FOR_TLS, TLS_NOT_AVAILABLE};
-// Custom error with thiserror
-use thiserror::Error;
+use data::{data, prepare_for_data};
+use ehlo::ehlo;
+use mail::mail;
+use rcpt::rcpt;
+use responses::QUIT;
+use starttls::starttls;
 use tokio::io;
 
-use crate::connection::{Connection, Mail, State, TlsConfig};
+use crate::connection::{Connection, State};
 
 fn extract_email(email: &str) -> Option<&str> {
     let chars = email.chars().enumerate();
@@ -40,85 +48,25 @@ fn extract_email(email: &str) -> Option<&str> {
 
 pub fn parse_and_execute(
     connection: &mut Connection,
-    command: String,
-) -> Result<Vec<u8>, io::Error> {
-    log::info!("SMTP Processor: Processing command {:?}", command);
+    raw_command: String,
+) -> Result<&'static [u8], io::Error> {
+    log::info!("SMTP Processor: Processing command...");
 
-    let mut command = command.split_whitespace();
+    let mut command: std::str::SplitWhitespace<'_> = raw_command.split_whitespace();
 
     match (command.next(), connection.state.clone()) {
-        (Some("ehlo"), State::Initial) => {
-            log::info!("SMTP Processor: EHLO command received");
-            log::info!("SMTP Processor: Sending 250 response");
-            connection.state = State::Ehlo;
-
-            Ok(match connection.tls_config {
-                TlsConfig::Encrypted { .. } => EHLO_TLS_AVAILABLE.as_bytes().to_vec(),
-                _ => EHLO_TLS_UNAVAILABLE.as_bytes().to_vec(),
-            })
+        (Some("ehlo"), State::Initial) => ehlo(connection, command),
+        (Some("starttls"), State::Ehlo(_domain)) => starttls(connection),
+        (Some("mail"), State::Ehlo(domain)) => mail(connection, command, domain),
+        (Some("rcpt"), State::MailFrom(mail)) => rcpt(connection, command, mail),
+        (Some("data"), State::MailFrom(mail)) => prepare_for_data(connection, mail),
+        (Some("quit"), _) => {
+            log::info!("Command received: QUIT");
+            Ok(QUIT)
         }
-        (Some("starttls"), State::Ehlo) => {
-            log::info!("SMTP Processor: STARTTLS command received");
-            Ok(match connection.tls_config {
-                TlsConfig::Encrypted { .. } => {
-                    connection.state = State::StartTls;
-                    READY_FOR_TLS.as_bytes().to_vec()
-                }
-                _ => TLS_NOT_AVAILABLE.as_bytes().to_vec(),
-            })
-        }
-        (Some("mail"), State::Ehlo) => {
-            log::info!("SMTP Processor: MAIL command received");
-            match command.next() {
-                Some(email) => {
-                    let extracted_email = extract_email(email);
-
-                    if let Some(email) = extracted_email {
-                        connection.state = State::MailFrom(Mail {
-                            from: email.to_owned(),
-                            ..Default::default()
-                        });
-                        log::info!("Sender: {:?}", email);
-                    } else {
-                        connection.state = State::Invalid;
-                        log::error!("Invalid Sender");
-                    }
-                }
-                None => {
-                    connection.state = State::Invalid;
-                    log::error!("Invalid Sender");
-                }
-            }
-            Ok(OK.as_bytes().to_vec())
-        }
-        (Some("rcpt"), State::MailFrom(mail)) => {
-            log::info!("SMTP Processor: RCPT command received");
-            match command.next() {
-                Some(email) => {
-                    let extracted_email = extract_email(email);
-                    if let Some(email) = extracted_email {
-                        let mut current_recipients = mail.to.clone();
-                        current_recipients.push(email.to_owned());
-                        log::info!("Recipients: {:?}", current_recipients);
-
-                        connection.state = State::MailFrom(Mail {
-                            to: current_recipients,
-                            ..mail.clone()
-                        });
-                    } else {
-                        connection.state = State::Invalid;
-                        log::error!("Invalid recipient");
-                    }
-                }
-                None => {
-                    connection.state = State::Invalid;
-                    log::error!("Invalid recipient");
-                }
-            }
-            Ok(OK.as_bytes().to_vec())
-        }
+        (_, State::Data(mail)) => data(connection, mail, raw_command),
         _ => {
-            log::error!("SMTP Processor: Invalid command {:?}", command);
+            log::error!("Invalid command {:?}", command);
             Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "Invalid command",

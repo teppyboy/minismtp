@@ -1,17 +1,11 @@
-use std::{marker::PhantomData, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
+use std::{marker::PhantomData, path::PathBuf, time::Duration};
 
 use async_std::channel::unbounded;
-use tokio::{
-    io::{self},
-    net::TcpListener,
-    task::{self, JoinError},
-    time::timeout,
-};
+use tokio::task;
 
-use crate::connection::{Connection, Stream};
+use crate::connection::Mail;
 
 use super::{start::start_server, Closed, Config, Listening, ServerError, SmtpServer};
-
 
 impl SmtpServer {
     pub fn new(
@@ -27,7 +21,7 @@ impl SmtpServer {
             log::info!("No certificates or keys provided, STARTTLS will not be available.")
         }
 
-        let (mail_tx, mail_rx) = unbounded();
+        let (mail_tx, mail_rx) = unbounded::<Mail>();
         let (affirm_tx, affirm_rx) = unbounded();
         let (shutdown_tx, shutdown_rx) = unbounded();
 
@@ -46,16 +40,16 @@ impl SmtpServer {
                 key_path,
                 mail_tx,
                 affirm_tx,
-                shutdown_rx
+                shutdown_rx,
             },
         }
     }
 
     pub async fn start(self) -> Result<SmtpServer<Listening>, ServerError> {
         task::spawn(start_server(self.config.clone()));
-        log::info!("Requested server start");
+        log::info!("Requesting server start...");
         self.affirm_rx.recv().await?;
-        log::info!("Confirmed server start");
+        log::info!("Server started.");
         Ok(SmtpServer {
             state: PhantomData::<Listening>,
             config: self.config.clone(),
@@ -64,7 +58,6 @@ impl SmtpServer {
             shutdown_tx: self.shutdown_tx.clone(),
         })
     }
-
 }
 
 impl SmtpServer<Listening> {
@@ -79,18 +72,5 @@ impl SmtpServer<Listening> {
             shutdown_tx: self.shutdown_tx.clone(),
             affirm_rx: self.affirm_rx.clone(),
         })
-        
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_start() {
-        //let server = SmtpServer::new("locassslhost", 4000, Duration::from_secs(5));
-
-        //server.start().await.unwrap();
     }
 }

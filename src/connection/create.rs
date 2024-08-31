@@ -1,6 +1,4 @@
-use std::{path::PathBuf, rc::Rc, sync::Arc};
-
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use std::{path::PathBuf, time::Duration};
 
 use super::{Connection, State, Stream, TlsConfig};
 
@@ -11,13 +9,14 @@ impl Connection {
         cert_path: Option<PathBuf>,
         key_path: Option<PathBuf>,
         buffer_size: Option<usize>,
+        timeout: Duration,
     ) -> Self {
         let state = State::Initial;
 
         let tls_config = match (cert_path, key_path) {
             (Some(cert_path), Some(key_path)) => TlsConfig::Encrypted {
-                cert_path: cert_path,
-                key_path: key_path,
+                cert_path,
+                key_path,
             },
             _ => TlsConfig::Plain,
         };
@@ -28,6 +27,7 @@ impl Connection {
             state,
             tls_config,
             buffer_size,
+            timeout,
         }
     }
 }
