@@ -429,16 +429,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "charset"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1f927b07c74ba84c7e5fe4db2baeb3e996ab2688992e39ac68ce3220a677c7e"
-dependencies = [
- "base64 0.22.1",
- "encoding_rs",
-]
-
-[[package]]
 name = "chumsky"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1152,14 +1142,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "mailparse"
-version = "0.15.0"
+name = "mail-parser"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3da03d5980411a724e8aaf7b61a7b5e386ec55a7fb49ee3d0ff79efc7e5e7c7e"
+checksum = "ed5a1335c3a964788c90cb42ae04a34b5f2628e89566949ce3bd4ada695c0bcd"
 dependencies = [
- "charset",
- "data-encoding",
- "quoted_printable",
+ "encoding_rs",
 ]
 
 [[package]]
@@ -1185,6 +1173,28 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "minismtp"
+version = "0.1.0"
+dependencies = [
+ "async-smtp",
+ "async-std",
+ "base64 0.22.1",
+ "env_logger",
+ "futures",
+ "hickory-resolver",
+ "ipnetwork",
+ "lettre",
+ "log",
+ "mail-parser",
+ "openssl",
+ "rustls-pemfile",
+ "thiserror",
+ "tokio",
+ "tokio-rustls",
+ "tokio-tls-upgrade",
+]
 
 [[package]]
 name = "miniz_oxide"
@@ -1776,28 +1786,6 @@ name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
-
-[[package]]
-name = "smtpserver"
-version = "0.1.0"
-dependencies = [
- "async-smtp",
- "async-std",
- "base64 0.22.1",
- "env_logger",
- "futures",
- "hickory-resolver",
- "ipnetwork",
- "lettre",
- "log",
- "mailparse",
- "openssl",
- "rustls-pemfile",
- "thiserror",
- "tokio",
- "tokio-rustls",
- "tokio-tls-upgrade",
-]
 
 [[package]]
 name = "socket2"

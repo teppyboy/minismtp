@@ -22,6 +22,7 @@ pub fn data(
     raw_command: String,
 ) -> Result<&'static [u8], io::Error> {
     log::info!("Some data received");
+    // Append the data to the mail
     mail.data += &raw_command;
     connection.state = State::Data(mail);
     if raw_command.ends_with("\r\n.\r\n") {

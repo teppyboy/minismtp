@@ -8,6 +8,40 @@ use crate::connection::Mail;
 use super::{start::start_server, Closed, Config, Listening, ServerError, SmtpServer};
 
 impl SmtpServer {
+    /**
+    ## Create a new SMTP server instance
+
+       The `new` function creates a new SMTP server instance with the following parameters:
+       - `host`: The host on which the server will listen for incoming connections.
+       - `port`: The port on which the server will listen for incoming connections.
+       - `domain`: The domain of the server.
+       - `timeout`: The duration after which the server will timeout.
+       - `buffer_size`: The size of the buffer used for reading incoming data (bytes).
+       - `certs_path`: The path to the certificates used for encryption.
+       - `key_path`: The path to the keys used for encryption.
+
+       The function returns a new SMTP server instance.
+
+       # Example
+
+       ```rust
+       use minismtp::server::SmtpServer;
+       use std::time::Duration;
+
+       #[tokio::main]
+       async fn main() {
+           let server = SmtpServer::new(
+               "localhost",
+               2525,
+               "localhost",
+               Some(Duration::from_secs(10)),
+               Some(1024),
+               None,
+               None,
+           );
+       }
+       ```
+    */
     pub fn new(
         host: &'static str,
         port: u16,
@@ -45,6 +79,9 @@ impl SmtpServer {
         }
     }
 
+    /**
+    Starts the server. Returns an error if server could not start
+    */
     pub async fn start(self) -> Result<SmtpServer<Listening>, ServerError> {
         task::spawn(start_server(self.config.clone()));
         log::info!("Requesting server start...");
@@ -61,6 +98,9 @@ impl SmtpServer {
 }
 
 impl SmtpServer<Listening> {
+    /**
+    Stops the server. Returns an error if server could not stop.
+    */
     pub async fn stop(self) -> Result<SmtpServer<Closed>, ServerError> {
         self.shutdown_tx.send(()).await?;
         self.affirm_rx.recv().await?;

@@ -7,6 +7,7 @@ use crate::{
 
 pub fn starttls(connection: &mut Connection) -> Result<&'static [u8], io::Error> {
     log::info!("Command received: STARTTLS");
+    // Check if the tls configuration allows for encryption
     Ok(match connection.tls_config {
         TlsConfig::Encrypted { .. } => {
             connection.state = State::StartTls;

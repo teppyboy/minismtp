@@ -1,12 +1,11 @@
 mod connection;
 mod parser;
-mod security;
 pub mod server;
 
 #[cfg(test)]
 mod tests {
+    use std::thread;
     use std::time::Duration;
-    use std::{env, thread};
 
     use crate::server::SmtpServer;
     use async_smtp::{Envelope, SendableEmail, SmtpClient, SmtpTransport};
@@ -59,9 +58,6 @@ mod tests {
     #[tokio::test]
     async fn test() {
         env_logger::builder().is_test(true).try_init().unwrap();
-
-        env::set_var("SPF_IP", "35.190.247.1");
-        env::set_var("SPF_DOMAIN", "google.com");
 
         let server = SmtpServer::new(
             "localhost",

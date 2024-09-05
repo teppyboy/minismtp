@@ -1,38 +1,37 @@
 use std::time::Duration;
 
 use futures::{select, FutureExt};
-use tokio::{net::TcpListener, task::spawn_blocking};
+use tokio::net::TcpListener;
 
-use crate::{
-    connection::{Connection, Stream},
-    security::spf::{check_spf, SpfPolicy},
-};
+use crate::connection::{Connection, Stream};
 
 use super::{Config, ServerError};
 
-async fn wait_for_connection(listener: &TcpListener, config: Config, timeout: Duration) {
+/**
+   Waits for a connection to be established and then processes it.
+*/
+async fn wait_for_connection(listener: &TcpListener, config: Config) {
     match listener.accept().await {
         Ok((socket, addr)) => {
             log::info!("New connection: {}", addr);
             tokio::spawn(async move {
+                // Create a new connection instance
                 let connection = Connection::new(
                     config.domain,
                     Stream::Plain(socket),
                     config.certs_path.clone(),
                     config.key_path.clone(),
                     config.buffer_size,
-                    timeout,
+                    config.timeout.unwrap_or(Duration::from_secs(10)),
                 )
                 .await;
 
+                // Process the connection
                 let process = connection.process().await;
 
                 match process {
-                    Ok(mut value) => {
-                        let domain = value.domain.clone();
-                        value.spf = spawn_blocking(move || check_spf(addr.ip(), domain))
-                            .await
-                            .unwrap_or((false, SpfPolicy::Fail));
+                    Ok(value) => {
+                        // The final result should be an email that we can forward to the channel
                         if let Ok(()) = config.mail_tx.send(value).await {
                             log::info!("Mail forwarded to channel");
                         } else {
@@ -51,6 +50,9 @@ async fn wait_for_connection(listener: &TcpListener, config: Config, timeout: Du
     }
 }
 
+/**
+Starts the TCP server that listens for incoming connections.
+*/
 pub async fn start_server(config: Config) -> Result<(), ServerError> {
     log::info!("Starting server on {}:{}", config.host, config.port);
     let listener = TcpListener::bind(&format!("{}:{}", config.host, config.port))
@@ -62,8 +64,7 @@ pub async fn start_server(config: Config) -> Result<(), ServerError> {
         })?;
     config.affirm_tx.send(()).await?;
 
-    let timeout = config.timeout.unwrap_or(Duration::from_secs(10));
-
+    // While listening for incoming connections, we also listen for shutdown signals.
     loop {
         select! {
             _ = config.shutdown_rx.recv().fuse() => {
@@ -73,7 +74,7 @@ pub async fn start_server(config: Config) -> Result<(), ServerError> {
                 }
                 return Ok(());
             }
-            _ = wait_for_connection(&listener,config.clone(),timeout).fuse() => {
+            _ = wait_for_connection(&listener,config.clone()).fuse() => {
                 log::info!("Connection handled");
             }
 

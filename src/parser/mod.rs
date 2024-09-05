@@ -1,5 +1,6 @@
 mod data;
 mod ehlo;
+mod helo;
 mod mail;
 mod rcpt;
 pub mod responses;
@@ -7,6 +8,7 @@ mod starttls;
 
 use data::{data, prepare_for_data};
 use ehlo::ehlo;
+use helo::helo;
 use mail::mail;
 use rcpt::rcpt;
 use responses::QUIT;
@@ -52,10 +54,14 @@ pub fn parse_and_execute(
 ) -> Result<&'static [u8], io::Error> {
     log::info!("SMTP Processor: Processing command...");
 
+    // Split the received data by whitespace
     let mut command: std::str::SplitWhitespace<'_> = raw_command.split_whitespace();
 
+    // The first phrase in the command is the command itself
+    // We match the command to a handler based on the current state of the connection
     match (command.next(), connection.state.clone()) {
         (Some("ehlo"), State::Initial) => ehlo(connection, command),
+        (Some("helo"), State::Initial) => helo(connection, command),
         (Some("starttls"), State::Ehlo(_domain)) => starttls(connection),
         (Some("mail"), State::Ehlo(domain)) => mail(connection, command, domain),
         (Some("rcpt"), State::MailFrom(mail)) => rcpt(connection, command, mail),

@@ -15,6 +15,7 @@ pub fn mail(
     log::info!("Command received: MAIL");
     match command.next() {
         Some(email) => {
+            // Extract the email from the command
             let extracted_email = extract_email(email);
 
             if let Some(email) = extracted_email {

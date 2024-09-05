@@ -1,3 +1,5 @@
+// Responses as per RFC 5321
+// The following are the responses that the server can send to the client as per RFC 5321:
 pub static EHLO_TLS_AVAILABLE: &[u8] = b"250-%DOMAIN%\r\n250 STARTTLS\r\n";
 pub static EHLO_TLS_UNAVAILABLE: &[u8] = b"250 %DOMAIN%\r\n";
 pub static OK: &[u8] = b"250 OK\r\n";
