@@ -1,5 +1,10 @@
 # `minismtp` - A light RFC-compliant* SMTP server library for Rust.
 
+[![crates.io](https://img.shields.io/crates/v/minismtp.svg)](https://crates.io/crates/minismtp)
+[![Documentation](https://docs.rs/minismtp/badge.svg)](https://docs.rs/minismtp)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+
 This is the implementation of a light SMTP server library for Rust. It is designed to be used in a server application that needs to receive emails.
 
 It has a fully custom-built SMTP command parser and handler. The most advanced SMTP server for rust so far has been [Stalwart's SMTP Server](https://github.com/stalwartlabs/smtp-server), which is a great library but I believe there exists use cases where you just want something minimal and simple.
