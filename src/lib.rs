@@ -1,5 +1,9 @@
 mod connection;
 mod parser;
+
+/**
+Contains the SmtpServer struct and its implementation.
+*/
 pub mod server;
 
 #[cfg(test)]

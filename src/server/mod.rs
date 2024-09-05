@@ -10,16 +10,35 @@ use tokio::{io, task::JoinError};
 use crate::connection::Mail;
 
 #[derive(Error, Debug)]
+/**
+## Server error
+The `ServerError` enum represents an error that can occur while running the SMTP server.
+*/
 pub enum ServerError {
     #[error("Network error: {0}")]
+    /**
+     * Occurs when there is a general network error
+     */
     Network(#[from] io::Error),
     #[error("Task error: {0}")]
+    /**
+     * Occurs when there is an error with am async task
+     */
     Task(#[from] JoinError),
     #[error("Send error: {0}")]
+    /**
+     * Occurs when there is an error transmitting a signal or an email
+     */
     Send(#[from] SendError<()>),
     #[error("Recv error: {0}")]
+    /**
+     * Occurs when there is an error receiving a signal or an email
+     */
     Recv(#[from] RecvError),
     #[error("Could not bind to {host}:{port} because {source}")]
+    /**
+     * Occurs when the server cannot bind to a host and port
+     */
     Bind {
         host: &'static str,
         port: u16,
@@ -27,8 +46,14 @@ pub enum ServerError {
         source: io::Error,
     },
     #[error("Could not confirm shutdown")]
+    /**
+     * Occurs when the server cannot confirm a shutdown via signalling
+     */
     Shutdown,
     #[error("Server is already running")]
+    /**
+     * Occurs when the server is already running and a start is attempted
+     */
     Running,
 }
 
@@ -61,7 +86,14 @@ pub struct Config {
     pub shutdown_rx: Receiver<()>,
 }
 
+/**
+    Listening state for the server
+*/
 pub struct Listening;
+
+/**
+    Closed state for the server
+*/
 pub struct Closed;
 
 /**
