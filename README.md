@@ -21,6 +21,8 @@ Due to time restrictions I have restricted the scope of this SMTP server to serv
 - `DATA` - Email data
 - `QUIT` - Close connection
 
+\* As you might notice, not all SMTP commands are supported. This is because of the limited scope of this project. `minismtp` is designed to be a simple and very light SMTP server used to just receive raw emails and pipe them elsewhere.
+
 ## Encryption
 The server supports full encryption via the `STARTTLS` command. The encryption upgrade is performed through my [tokio-tls-upgrade](https://crates.io/crates/tokio-tls-upgrade) which is a custom-built library that allows for a seamless upgrade of a TCP connection to a TLS connection.
 
