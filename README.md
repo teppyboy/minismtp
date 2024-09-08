@@ -3,6 +3,7 @@
 [![crates.io](https://img.shields.io/crates/v/minismtp.svg)](https://crates.io/crates/minismtp)
 [![Documentation](https://docs.rs/minismtp/badge.svg)](https://docs.rs/minismtp)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![GitHub branch status](https://img.shields.io/github/checks-status/starkbamse/minismtp/main)
 
 
 This is the implementation of a light SMTP server library for Rust. It is designed to be used in a server application that needs to receive emails.
