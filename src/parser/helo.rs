@@ -1,5 +1,4 @@
 use std::str::SplitWhitespace;
-
 use tokio::io;
 
 use crate::{
@@ -21,5 +20,5 @@ pub fn helo(
         connection.state = State::Ehlo("".to_string());
     }
     // We never support TLS on HELO
-    Ok(EHLO_TLS_UNAVAILABLE)
+    Ok(&EHLO_TLS_UNAVAILABLE)
 }

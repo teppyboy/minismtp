@@ -1,5 +1,4 @@
 use std::str::SplitWhitespace;
-
 use tokio::io;
 
 use crate::{
@@ -22,7 +21,7 @@ pub fn ehlo(
     }
     // Return based on the TLS configuration
     Ok(match connection.tls_config {
-        TlsConfig::Encrypted { .. } => EHLO_TLS_AVAILABLE,
-        _ => EHLO_TLS_UNAVAILABLE,
+        TlsConfig::Encrypted { .. } => &EHLO_TLS_AVAILABLE,
+        _ => &EHLO_TLS_UNAVAILABLE,
     })
 }

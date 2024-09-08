@@ -86,4 +86,5 @@ mod tests {
         log::info!("Received mail: {:?}", mail);
         listening_server.stop().await.unwrap();
     }
+
 }
