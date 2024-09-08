@@ -61,6 +61,14 @@ async fn main() {
 }
 ```
 
+## Changing the domain replied to in the `EHLO`/`EHLO` command
+
+The domain replied to in the `EHLO`/`EHLO` command can be changed by setting the environment variable `MINISMTP_DOMAIN` to the desired domain.
+
+```bash
+export MINISMTP_DOMAIN="mydomain.com"
+```
+
 ## License
 
 See the [LICENSE](LICENSE) file for license rights and limitations (MIT).
