@@ -64,9 +64,9 @@ mod tests {
         env_logger::builder().is_test(true).try_init().unwrap();
 
         let server = SmtpServer::new(
-            "localhost",
+            "localhost".to_string(),
             2525,
-            "localhost",
+            "localhost".to_string(),
             Some(Duration::from_secs(10)),
             None,
             Some("cert.pem".into()),
