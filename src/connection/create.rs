@@ -17,7 +17,7 @@ impl Connection {
        It returns a new `Connection` instance.
     */
     pub async fn new(
-        domain: &'static str,
+        domain: String,
         stream: Stream,
         cert_path: Option<PathBuf>,
         key_path: Option<PathBuf>,

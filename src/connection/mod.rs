@@ -105,6 +105,6 @@ pub struct Connection {
     pub stream: Stream,
     pub state: State,
     pub tls_config: TlsConfig,
-    pub domain: &'static str,
+    pub domain: String,
     pub timeout: Duration,
 }

@@ -40,7 +40,7 @@ pub enum ServerError {
      * Occurs when the server cannot bind to a host and port
      */
     Bind {
-        host: &'static str,
+        host: String,
         port: u16,
         #[source]
         source: io::Error,
@@ -74,9 +74,9 @@ pub enum ServerError {
    - `shutdown_rx`: The receiver for the shutdown channel.
 */
 pub struct Config {
-    pub host: &'static str,
+    pub host: String,
     pub port: u16,
-    pub domain: &'static str,
+    pub domain: String,
     pub timeout: Option<Duration>,
     pub buffer_size: Option<usize>,
     pub certs_path: Option<PathBuf>,

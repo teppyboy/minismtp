@@ -58,7 +58,7 @@ pub async fn start_server(config: Config) -> Result<(), ServerError> {
     let listener = TcpListener::bind(&format!("{}:{}", config.host, config.port))
         .await
         .map_err(|e| ServerError::Bind {
-            host: config.host,
+            host: config.host.clone(),
             port: config.port,
             source: e,
         })?;

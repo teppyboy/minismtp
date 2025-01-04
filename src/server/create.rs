@@ -43,9 +43,9 @@ impl SmtpServer {
        ```
     */
     pub fn new(
-        host: &'static str,
+        host: String,
         port: u16,
-        domain: &'static str,
+        domain: String,
         timeout: Option<Duration>,
         buffer_size: Option<usize>,
         certs_path: Option<PathBuf>,
