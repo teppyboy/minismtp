@@ -15,7 +15,7 @@ impl Connection {
                     return Err(ProcessingError::ConnectionClosed);
                 }
                 // Read the command as a string and convert it to lowercase.
-                let command = String::from_utf8_lossy(&buf[..n]).to_lowercase();
+                let command = &buf[..n];
                 log::info!("Received command: {:?}", command);
                 let result = parse_and_execute(self, command)?;
 

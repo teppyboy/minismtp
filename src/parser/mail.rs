@@ -1,4 +1,4 @@
-use std::str::SplitWhitespace;
+use std::slice::Split;
 
 use tokio::io;
 
@@ -9,14 +9,15 @@ use crate::{
 
 pub fn mail(
     connection: &mut Connection,
-    mut command: SplitWhitespace<'_>,
+    mut command: Split<'_, u8, impl FnMut(&u8) -> bool>,
     domain: String,
 ) -> Result<&'static [u8], io::Error> {
     log::info!("Command received: MAIL");
     match command.next() {
         Some(email) => {
             // Extract the email from the command
-            let extracted_email = extract_email(email);
+            let email_str = std::str::from_utf8(email).unwrap();
+            let extracted_email = extract_email(email_str);
 
             if let Some(email) = extracted_email {
                 connection.state = State::MailFrom(Mail {

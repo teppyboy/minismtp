@@ -61,7 +61,7 @@ pub struct Mail {
     pub domain: String,
     pub from: String,
     pub to: Vec<String>,
-    pub data: String,
+    pub data: Vec<u8>,
 }
 
 #[derive(Debug)]

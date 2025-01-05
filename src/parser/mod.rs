@@ -50,33 +50,48 @@ fn extract_email(email: &str) -> Option<&str> {
 
 pub fn parse_and_execute(
     connection: &mut Connection,
-    raw_command: String,
+    raw_command: &[u8],
 ) -> Result<&'static [u8], io::Error> {
     log::info!("SMTP Processor: Processing command...");
 
     // Split the received data by whitespace
-    let mut command: std::str::SplitWhitespace<'_> = raw_command.split_whitespace();
+    let mut commands = raw_command.split(|c| *c == b' ' || *c == b'\r' || *c == b'\n');
+    // let mut command: std::str::SplitWhitespace<'_> = raw_command.split_whitespace();
 
     // The first phrase in the command is the command itself
     // We match the command to a handler based on the current state of the connection
-    match (command.next(), connection.state.clone()) {
-        (Some("ehlo"), State::Initial) => ehlo(connection, command),
-        (Some("helo"), State::Initial) => helo(connection, command),
-        (Some("starttls"), State::Ehlo(_domain)) => starttls(connection),
-        (Some("mail"), State::Ehlo(domain)) => mail(connection, command, domain),
-        (Some("rcpt"), State::MailFrom(mail)) => rcpt(connection, command, mail),
-        (Some("data"), State::MailFrom(mail)) => prepare_for_data(connection, mail),
-        (Some("quit"), _) => {
+    let command = match commands.next() {
+        Some(c) => c,
+        None => {
+            log::error!("Invalid command {:?}", raw_command);
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Invalid command",
+            ));
+        }
+    };
+    
+    let command_string = std::str::from_utf8(command).unwrap().to_lowercase();
+    let command_str = command_string.as_str();
+    log::info!("Received command: {:?}", command_str);
+    match (command_str, connection.state.clone()) {
+        ("ehlo", State::Initial) => ehlo(connection, commands),
+        ("helo", State::Initial) => helo(connection, commands),
+        ("starttls", State::Ehlo(_domain)) => starttls(connection),
+        ("mail", State::Ehlo(domain)) => mail(connection, commands, domain),
+        ("rcpt", State::MailFrom(mail)) => rcpt(connection, commands, mail),
+        ("data", State::MailFrom(mail)) => prepare_for_data(connection, mail),
+        ("quit", _) => {
             log::info!("Command received: QUIT");
-            Ok(QUIT)
+            return Ok(QUIT);
         }
         (_, State::Data(mail)) => data(connection, mail, raw_command),
         _ => {
             log::error!("Invalid command {:?}", command);
-            Err(io::Error::new(
+            return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "Invalid command",
-            ))
+            ));
         }
     }
 }
